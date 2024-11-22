@@ -19,6 +19,7 @@ const Chatbot = () => {
       { sender: "user", text: message },
       { sender: "bot", text: "Cảm ơn bạn đã gửi câu hỏi! Mình sẽ phản hồi sớm nhé." }, // Tạm thời phản hồi bot cố định
     ]);
+    setInput("")
   };
 
   // Xử lý khi click câu hỏi phổ biến
