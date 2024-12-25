@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -8,18 +8,63 @@ const Chatbot = () => {
     },
   ]);
 
+  useEffect(() => {
+    const introductionMessage = "Xin chào! Đây là Space Chatbot, trợ lý đắc lực dành cho bạn! Bạn muốn tìm kiếm thông tin về những gì? Đừng quên chọn nguồn tham khảo phù hợp để mình có thể giúp bạn tìm kiếm thông tin chính xác nhất nha.";
+    let index = 0;
+    const interval = setInterval(() => {
+      setMessages((prev) => [
+        ...prev.slice(0, prev.length - 1),
+        { sender: "bot", text: introductionMessage.slice(0, index + 1) },
+      ]);
+      index++;
+      if (index === introductionMessage.length) {
+        clearInterval(interval);
+      }
+    }, 10); // Hiển thị mỗi ký tự trong 50ms
+    setMessages([{ sender: "bot", text: "" }]); // Khởi tạo tin nhắn rỗng ban đầu
+  }, []);
+  
+
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Hàm typewriter để hiện từng chữ một
+  const typewriter = (text, callback) => {
+    let index = 0;
+    const interval = setInterval(() => {
+      setMessages((prev) => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage && lastMessage.sender === "bot") {
+          return [
+            ...prev.slice(0, prev.length - 1),
+            { ...lastMessage, text: lastMessage.text + text.charAt(index) },
+          ];
+        }
+        return [...prev, { sender: "bot", text: text.charAt(index) }];
+      });
+      index++;
+      if (index === text.length) {
+        clearInterval(interval);
+        callback && callback();
+      }
+    }, 20); // Tốc độ hiển thị mỗi ký tự
+  };
 
   // Xử lý gửi tin nhắn
   const handleSendMessage = (message) => {
     if (!message.trim()) return;
 
-    setMessages((prev) => [
-      ...prev,
-      { sender: "user", text: message },
-      { sender: "bot", text: "Cảm ơn bạn đã gửi câu hỏi! Mình sẽ phản hồi sớm nhé." }, // Tạm thời phản hồi bot cố định
-    ]);
-    setInput("")
+    setMessages((prev) => [...prev, { sender: "user", text: message }]);
+    setInput("");
+    setLoading(true);
+
+    // Giả lập thời gian phản hồi của chatbot
+    setTimeout(() => {
+      setMessages((prev) => [...prev, { sender: "bot", text: "" }]);
+      typewriter(" Cảm ơn bạn đã gửi câu hỏi! Mình sẽ phản hồi sớm nhé.", () => {
+        setLoading(false);
+      });
+    }, 1500); // 1.5 giây loading
   };
 
   // Xử lý khi click câu hỏi phổ biến
@@ -91,6 +136,19 @@ const Chatbot = () => {
               </div>
             </div>
           ))}
+
+          {loading && !messages.some(m => m.sender === "bot" && m.text === "") && (
+            <div className="flex justify-start mb-3">
+              <img
+                src="/chatbot.jpg"
+                alt="Chatbot"
+                className="w-10 h-10 rounded-full mr-3"
+              />
+              <div className="max-w-[70%] px-4 py-2 rounded-lg bg-blue-100 text-gray-700">
+                <span className="animate-pulse">...</span>
+              </div>
+            </div>
+          )}
         </div>
         <div className="relative flex items-center">
           <input
